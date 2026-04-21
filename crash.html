@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crash Game</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #1c1c1c; color: #fff; }
+        .container { width: 80%; margin: auto; text-align: center; }
+        #multiplier { font-size: 3em; margin: 20px; }
+        .button { padding: 10px 20px; font-size: 1.5em; margin: 10px; cursor: pointer; border: none; background-color: #28a745; color: white; border-radius: 5px; }
+        .button:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Crash Game</h1>
+        <div id="multiplier">1.00</div>
+        <button id="cashOutBtn" class="button">Cash Out!</button>
+        <button id="allInBtn" class="button">All In</button>
+        <h3 id="message"></h3>
+    </div>
+    <script>
+        let multiplier = 1.00;
+        let gameActive = false;
+        let cashOutValue = 0;
+        const balanceKey = 'gamebling_balance';
+        const historyKey = 'gamebling_history';
+        let betAmount = 0;
+
+        function startGame() {
+            gameActive = true;
+            multiplier = 1.00;
+            let crashTime = Math.random() * 10000 + 3000; // random crash between 3s to 13s
+            const interval = setInterval(() => {
+                if (gameActive) {
+                    multiplier += 0.01;
+                    document.getElementById('multiplier').innerText = multiplier.toFixed(2);
+                }
+            }, 100);
+            setTimeout(() => {
+                gameActive = false;
+                clearInterval(interval);
+                document.getElementById('message').innerText = 'Game Over! Crash at ' + multiplier.toFixed(2) + 'x';
+            }, crashTime);
+        }
+
+        document.getElementById('cashOutBtn').addEventListener('click', function() {
+            if (gameActive) {
+                cashOutValue = (multiplier * betAmount).toFixed(2);
+                let balance = parseFloat(localStorage.getItem(balanceKey)) || 0;
+                balance += parseFloat(cashOutValue);
+                localStorage.setItem(balanceKey, balance);
+                let history = JSON.parse(localStorage.getItem(historyKey)) || [];
+                history.push({
+                    amount: cashOutValue,
+                    multiplier: multiplier.toFixed(2),
+                    timestamp: new Date().toISOString()
+                });
+                localStorage.setItem(historyKey, JSON.stringify(history));
+                document.getElementById('message').innerText = 'You cashed out: $' + cashOutValue + '!';
+            }
+        });
+
+        document.getElementById('allInBtn').addEventListener('click', function() {
+            let balance = parseFloat(localStorage.getItem(balanceKey)) || 0;
+            if (balance > 0) {
+                betAmount = balance;
+                localStorage.setItem(balanceKey, 0);
+                startGame();
+            } else {
+                document.getElementById('message').innerText = 'No balance available!';
+            }
+        });
+    </script>
+</body>
+</html>
